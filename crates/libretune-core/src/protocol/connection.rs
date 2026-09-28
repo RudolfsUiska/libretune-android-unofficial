@@ -8,6 +8,7 @@ use std::net::TcpStream;
 use std::time::{Duration, Instant};
 
 use super::calibration::{self, CalibrationTable};
+use super::android_usb::AndroidUsbChannel;
 use super::stream::{CommunicationChannel, SerialChannel, TcpChannel};
 use super::{
     commands::{BurnParams, ReadMemoryParams, WriteMemoryParams},
@@ -334,6 +335,10 @@ pub enum ConnectionState {
 pub enum ConnectionType {
     Serial,
     Tcp,
+    /// USB-serial on Android, driven through a descriptor the platform hands us.
+    /// Android exposes no tty node, so the adapter is driven with bulk transfers
+    /// instead - see [`super::android_usb`].
+    AndroidUsb,
 }
 
 /// Connection runtime packet selection override
@@ -366,6 +371,12 @@ pub struct ConnectionConfig {
     pub tcp_host: Option<String>,
     /// TCP port (for TCP connection)
     pub tcp_port: Option<u16>,
+    /// USB file descriptor (Android only).
+    ///
+    /// Supplied by the platform - `UsbDeviceConnection.getFileDescriptor()`
+    /// inside an APK, or `termux-usb -r` outside one. We cannot open the device
+    /// ourselves: an unprivileged Android process may not enumerate USB.
+    pub usb_fd: Option<i32>,
     /// Use modern protocol with CRC
     pub use_modern_protocol: bool,
     /// Response timeout in milliseconds
@@ -394,6 +405,7 @@ impl Default for ConnectionConfig {
             baud_rate: DEFAULT_BAUD_RATE,
             tcp_host: None,
             tcp_port: None,
+            usb_fd: None,
             use_modern_protocol: true,
             timeout_ms: DEFAULT_TIMEOUT_MS,
             runtime_packet_mode: RuntimePacketMode::Auto,
@@ -730,6 +742,24 @@ impl Connection {
                 .map_err(|e| ProtocolError::ConnectionFailed(e.to_string()))?;
                 stream.set_nodelay(true).ok();
                 Box::new(TcpChannel::new(stream))
+            }
+            ConnectionType::AndroidUsb => {
+                // Android hands us an already-claimed device; we never open one.
+                let fd = self.config.usb_fd.ok_or_else(|| {
+                    ProtocolError::ConnectionFailed(
+                        "no USB file descriptor supplied - the Android layer must \
+                         claim the device and pass its descriptor"
+                            .to_string(),
+                    )
+                })?;
+                tracing::info!("Connecting to ECU via Android USB (fd {})", fd);
+                let mut ch = AndroidUsbChannel::from_fd(fd, self.config.baud_rate)
+                    .map_err(|e| ProtocolError::ConnectionFailed(e.to_string()))?;
+                ch.set_timeout(Duration::from_millis(self.config.timeout_ms))
+                    .map_err(|e| ProtocolError::ConnectionFailed(e.to_string()))?;
+                ch.clear_input_buffer()
+                    .map_err(|e| ProtocolError::ConnectionFailed(e.to_string()))?;
+                Box::new(ch)
             }
         };
 

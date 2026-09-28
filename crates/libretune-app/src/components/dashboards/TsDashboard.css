@@ -622,3 +622,11 @@
     margin: 0 16px;
   }
 }
+
+/* Fullscreen: the dashboard covers the whole window (utils/dashboardFullscreen). */
+.ts-dashboard-container.ts-dashboard-fullscreen {
+  position: fixed;
+  inset: 0;
+  z-index: 900;
+  border-radius: 0;
+}

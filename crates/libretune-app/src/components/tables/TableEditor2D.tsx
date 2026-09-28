@@ -3,6 +3,7 @@ import { invoke } from '@tauri-apps/api/core';
 import { open, save } from '@tauri-apps/plugin-dialog';
 import { emit } from '@tauri-apps/api/event';
 import { ArrowLeft, Save, Zap, ExternalLink, AlertTriangle, Palette, MapPin, Crosshair, Box, Scaling, ArrowUpDown } from 'lucide-react';
+import { useUiScale } from '../../utils/uiScale';
 import TableToolbar from './TableToolbar';
 import TableGrid, { SelectionRange } from './TableGrid';
 import TableEditor3D from './TableEditor3D';
@@ -189,6 +190,7 @@ export default function TableEditor2D({
   const [lockedCells, setLockedCells] = useState<Set<string>>(new Set());
   const [historyTrail, setHistoryTrail] = useState<[number, number, number][]>([]);
   const [showColorShade, setShowColorShade] = useState(true);
+  const compact = useUiScale() > 1;
   const [showHistoryTrail, setShowHistoryTrail] = useState(true);
   const [show3D, setShow3D] = useState(false);
 
@@ -1434,11 +1436,16 @@ export default function TableEditor2D({
       {/* Standalone mode: full header with back button and actions */}
       {!embedded && (
         <div className="editor-header">
-          <button className="back-btn" onClick={onBack}>
-            <ArrowLeft size={18} />
-            <span>Back</span>
-          </button>
-          <h1>{title}</h1>
+          {/* Scaled up, the tab names the table and navigates away from it. */}
+          {!compact && (
+            <>
+              <button className="back-btn" onClick={onBack}>
+                <ArrowLeft size={18} />
+                <span>Back</span>
+              </button>
+              <h1>{title}</h1>
+            </>
+          )}
           <div className="editor-actions">
             <button 
               className={`action-btn ${showColorShade ? 'active' : ''}`}

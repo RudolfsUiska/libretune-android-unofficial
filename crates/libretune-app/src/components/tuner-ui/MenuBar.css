@@ -185,3 +185,50 @@
   left: auto;
   right: 100%;
 }
+
+/* Burger mode (UI scale above 100%): one button replaces the menu row, and
+   the panel lists every menu with submenus expanding in place. */
+.menubar-burger {
+  height: 100%;
+  padding: 0 var(--space-4);
+  display: flex;
+  align-items: center;
+  background: none;
+  border: none;
+  color: var(--text-secondary);
+  cursor: pointer;
+}
+
+.menubar-burger:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+}
+
+/* In burger mode the menubar lives inside the toolbar row (TunerLayout),
+   so it drops its own bar styling and opens its panel leftwards. */
+.menubar.menubar-compact {
+  height: 100%;
+  background: none;
+  border-bottom: none;
+  margin-left: var(--space-1);
+  padding-left: var(--space-2);
+  border-left: 1px solid var(--border-subtle);
+}
+
+.menubar-compact > .menu-dropdown-inline {
+  left: auto;
+  right: 0;
+  width: min(320px, 100vw);
+  max-height: calc(100vh - var(--toolbar-height));
+  overflow-y: auto;
+}
+
+.menu-dropdown-inline .menu-dropdown-inline {
+  position: static;
+  min-width: 0;
+  box-shadow: none;
+  border: none;
+  border-left: 2px solid var(--border-subtle);
+  margin-left: var(--space-4);
+  border-radius: 0;
+}

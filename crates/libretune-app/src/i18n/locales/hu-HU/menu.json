@@ -27,7 +27,10 @@
     "title": "&Nézet",
     "dashboard": "&Müszerfal",
     "toggleSidebar": "&Oldal menü mutat/rejt",
-    "theme": "&Témák"
+    "theme": "&Témák",
+    "uiScale": "Felület &mérete",
+    "openDashboardsFullscreen": "Műszerfalak megnyitása &teljes képernyőn",
+    "openTabsFullscreen": "Lapok megnyitása teljes &képernyőn"
   },
   "tools": {
     "title": "&Eszközök",

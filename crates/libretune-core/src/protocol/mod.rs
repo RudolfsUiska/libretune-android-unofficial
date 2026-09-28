@@ -4,6 +4,7 @@
 //!
 //! Supports both legacy ASCII protocol and modern binary protocol with CRC32.
 
+pub mod android_usb;
 pub mod calibration;
 pub mod command_builder;
 pub mod commands;

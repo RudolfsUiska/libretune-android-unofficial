@@ -20,6 +20,23 @@
   border-bottom: 1px solid var(--border-subtle);
   gap: var(--space-2);
   flex-shrink: 0;
+  /* One row always: on a narrow screen it scrolls sideways rather than
+     wrapping, so the grid keeps its height. */
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.table-toolbar::-webkit-scrollbar {
+  display: none;
+}
+
+.table-toolbar > * {
+  flex-shrink: 0;
+}
+
+/* Scaled-up UI: icon-only buttons (see TableToolbar). */
+.table-toolbar-compact .table-toolbar-label {
+  display: none;
 }
 
 .table-toolbar-group {
@@ -294,4 +311,20 @@
   height: 1px;
   background: var(--border-subtle);
   margin: var(--space-1) 0;
+}
+
+/* Fit mode (TableEditor): cells shed their padding and minimum widths so the
+   zoom that fills the width can be as large as possible, and the axis corner
+   wraps its label instead of widening the first column. */
+.table-grid-fit .table-cell,
+.table-grid-fit .table-x-header,
+.table-grid-fit .table-y-header {
+  min-width: 0;
+  padding: 1px 3px;
+}
+
+.table-grid-fit .table-corner {
+  padding: 1px 3px;
+  white-space: normal;
+  width: 1%;
 }

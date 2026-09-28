@@ -1,5 +1,5 @@
 
-import { Plus, Copy, Pencil, Trash2, Save, RotateCw, AlertTriangle, Compass } from 'lucide-react';
+import { Plus, Copy, Pencil, Trash2, Save, RotateCw, AlertTriangle, Compass, Maximize2 } from 'lucide-react';
 import { ValidationReport } from '../utils/validation';
 
 interface Props {
@@ -16,6 +16,7 @@ interface Props {
   onToggleValidationPanel: () => void;
   legacyMode: boolean;
   onToggleLegacyMode: () => void;
+  onFullscreen: () => void;
 }
 
 /**
@@ -35,6 +36,7 @@ export default function DashboardHeader({
   onToggleValidationPanel,
   legacyMode,
   onToggleLegacyMode,
+  onFullscreen,
 }: Props) {
   return (
     <div className="ts-dashboard-header">
@@ -89,6 +91,9 @@ export default function DashboardHeader({
           title={legacyMode ? 'Legacy TS layout enabled' : 'Enable legacy TS layout'}
         >
           <Compass size={14} /> Legacy: {legacyMode ? 'On' : 'Off'}
+        </button>
+        <button className="ts-dashboard-action-btn" onClick={onFullscreen} title="Fullscreen (Back or Esc to exit)">
+          <Maximize2 size={14} />
         </button>
       </div>
     </div>

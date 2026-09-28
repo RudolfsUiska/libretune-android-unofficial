@@ -74,6 +74,12 @@ wasmtime = { workspace = true }
 # Text encoding detection (Windows-1252 fallback for legacy ECU INI files)
 encoding_rs = "0.8"
 
+# USB-serial transport driven over raw bulk transfers via a caller-supplied
+# file descriptor. Required on Android, which exposes no tty node for USB
+# adapters; optional elsewhere. Off by default so desktop builds do not gain a
+# libusb dependency unless asked for.
+rusb = { version = "0.9", optional = true }
+
 [dev-dependencies]
 pretty_assertions = { workspace = true }
 serial_test = "3.2.0"
@@ -89,3 +95,7 @@ wat = "1.255.0"
 all-features = true
 rustdoc-args = ["--cfg", "docsrs"]
 targets = ["x86_64-unknown-linux-gnu", "x86_64-pc-windows-msvc", "x86_64-apple-darwin"]
+
+
+[features]
+usb-serial = ["dep:rusb"]

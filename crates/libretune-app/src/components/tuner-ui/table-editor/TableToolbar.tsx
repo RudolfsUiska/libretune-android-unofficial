@@ -1,4 +1,5 @@
-import { Copy, Clipboard, Undo2, Redo2, Flame, Crosshair, Box, Wand2, Upload, Download, ArrowUpDown } from 'lucide-react';
+import { Copy, Clipboard, Undo2, Redo2, Flame, Crosshair, Box, Wand2, Upload, Download, ArrowUpDown, Shrink } from 'lucide-react';
+import { useUiScale } from '../../../utils/uiScale';
 import '../TableEditor.css';
 
 interface TableToolbarProps {
@@ -27,6 +28,9 @@ interface TableToolbarProps {
   onToggleYAxisBottom: () => void;
   show3D: boolean;
   onToggle3D: () => void;
+  /** Shrink the grid so the whole table fits without scrolling. */
+  fitToScreen: boolean;
+  onToggleFitToScreen: () => void;
   /** Generate the whole table from engine specs (VE/ignition/AFR only). */
   onGenerate?: () => void;
   generatableLabel?: string;
@@ -60,13 +64,18 @@ export default function TableToolbar({
   onToggleYAxisBottom,
   show3D,
   onToggle3D,
+  fitToScreen,
+  onToggleFitToScreen,
   onGenerate,
   generatableLabel,
   onImportTable,
   onExportTable,
 }: TableToolbarProps) {
+  // Scaled up (phone), text labels would push the row past the screen edge;
+  // icons alone keep it on one line (titles still name each button).
+  const compact = useUiScale() > 1;
   return (
-    <div className="table-toolbar">
+    <div className={`table-toolbar ${compact ? 'table-toolbar-compact' : ''}`}>
       <div className="table-toolbar-group">
         <button
           className="table-toolbar-btn"
@@ -193,7 +202,7 @@ export default function TableToolbar({
             onClick={onBurn}
             title="Burn to ECU"
           >
-            <Flame size={14} /> Burn
+            <Flame size={14} /> <span className="table-toolbar-label">Burn</span>
           </button>
         </>
       )}
@@ -206,7 +215,7 @@ export default function TableToolbar({
         disabled={!hasOutputChannels}
         title={hasOutputChannels ? `Follow Mode (F) - ${followMode ? 'ON' : 'OFF'}` : 'Follow Mode unavailable (no output channels defined)'}
       >
-        <Crosshair size={14} /> Follow
+        <Crosshair size={14} /> <span className="table-toolbar-label">Follow</span>
       </button>
       
       <button
@@ -224,7 +233,14 @@ export default function TableToolbar({
         onClick={onToggle3D}
         title={`3D View - ${show3D ? 'ON' : 'OFF'}`}
       >
-        <Box size={14} /> 3D
+        <Box size={14} /> <span className="table-toolbar-label">3D</span>
+      </button>
+      <button
+        className={`table-toolbar-btn ${fitToScreen ? 'active' : ''}`}
+        onClick={onToggleFitToScreen}
+        title={`Fit whole table on screen - ${fitToScreen ? 'ON' : 'OFF'}`}
+      >
+        <Shrink size={14} /> <span className="table-toolbar-label">Fit</span>
       </button>
 
       {onGenerate && (
@@ -235,7 +251,7 @@ export default function TableToolbar({
             onClick={onGenerate}
             title={`Generate ${generatableLabel ?? 'table'} from engine specs`}
           >
-            <Wand2 size={14} /> Generate
+            <Wand2 size={14} /> <span className="table-toolbar-label">Generate</span>
           </button>
         </>
       )}

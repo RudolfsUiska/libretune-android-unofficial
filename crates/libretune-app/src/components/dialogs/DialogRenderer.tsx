@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { invoke } from '@tauri-apps/api/core';
 import { ArrowLeft } from 'lucide-react';
+import { useUiScale } from '../../utils/uiScale';
 import './DialogRenderer.css';
 import {
   type DialogDefinition,
@@ -86,20 +87,26 @@ export default function DialogRenderer({ definition, onBack, openTable, context,
     return () => clearTimeout(timer);
   }, [highlightTerm, definition.name]);
   
+  // Scaled up (phone), the tab already names this view and switches away
+  // from it, so the back/title bar only costs rows of the dialog.
+  const compact = useUiScale() > 1;
+
   const handleFieldFocus = (info: FieldInfo) => {
     setSelectedField(info);
   };
   
   return (
     <div className="dialog-view view-transition">
-      <div className="editor-header">
-        <button onClick={onBack} className="icon-btn" title="Back">
-          <ArrowLeft size={20} />
-        </button>
-        <h2 className="content-title" style={{ margin: 0 }}>
-          {displayTitle || definition.title}
-        </h2>
-      </div>
+      {!compact && (
+        <div className="editor-header">
+          <button onClick={onBack} className="icon-btn" title="Back">
+            <ArrowLeft size={20} />
+          </button>
+          <h2 className="content-title" style={{ margin: 0 }}>
+            {displayTitle || definition.title}
+          </h2>
+        </div>
+      )}
 
       <div className="glass-card dialog-container" ref={containerRef}>
         <DialogComponentsLayout

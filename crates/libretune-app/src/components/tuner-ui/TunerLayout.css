@@ -63,3 +63,11 @@
   color: var(--text-muted);
   font-size: var(--font-size-lg);
 }
+
+/* Tab fullscreen (utils/viewFullscreen): the active tab covers the window. */
+.tuner-layout-content.tuner-layout-content-fullscreen {
+  position: fixed;
+  inset: 0;
+  z-index: 900;
+  background: var(--bg-primary);
+}

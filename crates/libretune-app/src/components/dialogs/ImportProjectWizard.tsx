@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { invoke } from '@tauri-apps/api/core';
-import { open } from '@tauri-apps/plugin-dialog';
+import { pickFolder } from '../../utils/pickFolder';
 import { FolderOpen, FileArchive, Check, AlertTriangle, ArrowRight, Loader } from 'lucide-react';
 import { Dialog, Button } from '../common';
 import './ImportProjectWizard.css';
@@ -51,13 +51,14 @@ export default function ImportProjectWizard({
 
   const handleSelectFolder = async () => {
     try {
-      const selected = await open({
-        directory: true,
-        multiple: false,
+      // The importer reads only projectCfg/, restorePoints/ and top-level
+      // files; on Android anything else (e.g. DataLogs) is not copied.
+      const selected = await pickFolder({
         title: 'Select TS Project Folder',
+        includeDirs: ['projectCfg', 'restorePoints'],
       });
 
-      if (selected && typeof selected === 'string') {
+      if (selected) {
         setSelectedPath(selected);
         setLoading(true);
         setError(null);
@@ -88,12 +89,13 @@ export default function ImportProjectWizard({
     setError(null);
 
     try {
-      const projectPath = await invoke<string>('import_tunerstudio_project', {
+      // The backend returns the new project's info, not a bare path.
+      const imported = await invoke<{ path: string }>('import_tunerstudio_project', {
         sourcePath: selectedPath,
       });
 
       // Import successful - call the callback which will open the project
-      onImportComplete(projectPath);
+      onImportComplete(imported.path);
       handleClose();
     } catch (e) {
       setError(`Import failed: ${e}`);

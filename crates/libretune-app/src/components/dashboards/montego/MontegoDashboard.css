@@ -1,0 +1,143 @@
+/*
+ * Montego LCD dash: vivid LCD colours on graph paper, like the 1984 MG
+ * Montego's instrument panel. The whole dash is one SVG in grid units (see
+ * MontegoDashboard.tsx), so sizes below are grid units too. Unlit segments
+ * are the lit colour at very low opacity, so they stay faintly visible.
+ */
+.mg-dash {
+  --lcd-bg: #05070b;
+  --grid-minor: rgba(96, 120, 160, 0.2);
+  --grid-major: rgba(120, 150, 200, 0.38);
+  --lcd-green: #8ff5c3;
+  --lcd-lime: #9be84a;
+  --lcd-yellow: #ffd21f;
+  --lcd-orange: #ff6a13;
+  --lcd-red: #ff2a1a;
+  --lcd-label: #b9c6d8;
+  --unlit: 0.07;
+
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+  overflow: hidden;
+  background: var(--lcd-bg);
+}
+
+.mg-svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.mg-glass {
+  fill: var(--lcd-bg);
+}
+
+/* Graph paper: 1 px lines at any scale. */
+.mg-grid,
+.mg-grid-major {
+  vector-effect: non-scaling-stroke;
+  stroke-width: 1px;
+}
+.mg-grid {
+  stroke: var(--grid-minor);
+}
+.mg-grid-major {
+  stroke: var(--grid-major);
+}
+
+/* Labels, in grid units. */
+.mg-label,
+.mg-label-lg,
+.mg-scale,
+.mg-caption,
+.mg-mark,
+.mg-tiny {
+  font-family: 'Arial Narrow', 'Roboto Condensed', Arial, sans-serif;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  fill: var(--lcd-label);
+}
+.mg-label {
+  font-size: 1.5px;
+}
+.mg-label-lg {
+  font-size: 2.2px;
+}
+.mg-scale {
+  font-size: 2.4px;
+}
+.mg-caption,
+.mg-mark,
+.mg-tiny {
+  font-size: 1.3px;
+}
+
+/* LCD elements: faint when unlit, glowing when lit. */
+.mg-dash .unlit {
+  opacity: var(--unlit);
+}
+.mg-dash .lit {
+  filter: drop-shadow(0 0 3px currentColor);
+}
+.mg-green {
+  fill: var(--lcd-green);
+  color: var(--lcd-green);
+}
+.mg-yellow {
+  fill: var(--lcd-yellow);
+  color: var(--lcd-yellow);
+}
+.mg-red {
+  fill: var(--lcd-red);
+  color: var(--lcd-red);
+}
+.mg-bar-seg.mg-green {
+  fill: var(--lcd-lime);
+  color: var(--lcd-lime);
+}
+
+/* Seven-segment digits take their colour from `color`. */
+.mg-digits {
+  color: var(--lcd-orange);
+}
+.mg-dash .seg7 polygon,
+.mg-dash .seg7 circle {
+  fill: currentColor;
+}
+/* A reading in its warning range turns its digits red. */
+.mg-warn .mg-digits {
+  color: var(--lcd-red);
+}
+
+/* Warning squares, like the Montego's message centre. */
+.mg-square {
+  fill: var(--lcd-green);
+  opacity: var(--unlit);
+}
+.mg-square-ok {
+  fill: var(--lcd-lime);
+  color: var(--lcd-lime);
+  opacity: 1;
+  filter: drop-shadow(0 0 3px currentColor);
+}
+.mg-square-caution {
+  fill: var(--lcd-yellow);
+  color: var(--lcd-yellow);
+  opacity: 1;
+  filter: drop-shadow(0 0 3px currentColor);
+}
+.mg-square-warn {
+  fill: var(--lcd-red);
+  color: var(--lcd-red);
+  opacity: 1;
+  filter: drop-shadow(0 0 3px currentColor);
+  animation: mg-blink 1s steps(2) infinite;
+}
+
+@keyframes mg-blink {
+  50% {
+    opacity: 0.25;
+  }
+}

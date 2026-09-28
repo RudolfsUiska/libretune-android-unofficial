@@ -46,6 +46,8 @@ import { useLoading } from "./contexts/LoadingContext";
 import { useToast } from "./contexts/ToastContext";
 import { formatError } from "./utils/formatError";
 import { buildSidebarItems } from "./utils/buildSidebarItems";
+import { useUiScale } from "./utils/uiScale";
+import { openDashboardsFullscreen as dashFsPref, openTabsFullscreen as tabsFsPref } from "./utils/viewFullscreen";
 import { TabContentRouter } from "./components/TabContentRouter";
 import { buildMenuItems } from "./menus/buildMenuItems";
 import { buildToolbarItems } from "./menus/buildToolbarItems";
@@ -1549,9 +1551,12 @@ function AppContent() {
     setActiveTabId,
   });
 
+  const uiScale = useUiScale();
+  const openDashboardsFullscreen = dashFsPref.use();
+  const openTabsFullscreen = tabsFsPref.use();
   const menuItems: TunerMenuItem[] = useMemo(() => buildMenuItems({
     t, currentProject, tuneModified, status, ecuType, iniCapabilities, backendMenus, theme,
-    sidebarVisible, showEcuMenus: showEcuMenusInMenubar, tabs, openTarget, handleStdTarget, openHelpTopic, showToast,
+    uiScale, openDashboardsFullscreen, openTabsFullscreen, sidebarVisible, showEcuMenus: showEcuMenusInMenubar, tabs, openTarget, handleStdTarget, openHelpTopic, showToast,
     closeProject, handleCreateRestorePoint,
     setConnectEcuWizardOpen, setImportProjectOpen, setSaveDialogOpen, setLoadDialogOpen,
     setOnlineIniDialogOpen,
@@ -1560,7 +1565,7 @@ function AppContent() {
     setTuneFileDiffOpen, setDynoOverlayOpen, setPluginPanelOpen, agentPanelVisible, setAgentPanelVisible, setConnectionDialogOpen,
     setUserManualOpen, setUserManualSection, setAboutDialogOpen, setSidebarVisible,
     setTheme, setTabs, setTabContents, setActiveTabId,
-  }), [backendMenus, theme, sidebarVisible, showEcuMenusInMenubar, agentPanelVisible, status.state, ecuType, iniCapabilities, openTarget, handleStdTarget, openHelpTopic, currentProject, tuneModified, showToast, t, tabs]);
+  }), [backendMenus, theme, uiScale, openDashboardsFullscreen, openTabsFullscreen, sidebarVisible, showEcuMenusInMenubar, agentPanelVisible, status.state, ecuType, iniCapabilities, openTarget, handleStdTarget, openHelpTopic, currentProject, tuneModified, showToast, t, tabs]);
 
   // Listen for the agent pop-out window's "dock back" signal: re-show the
   // docked side panel. (Mirrors the tab:dock handling in useTabPopout.)

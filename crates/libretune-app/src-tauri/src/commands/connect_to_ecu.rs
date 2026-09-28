@@ -33,6 +33,7 @@ pub async fn connect_to_ecu(
 
     let conn_type = match connection_type.as_deref() {
         Some(t) if t.eq_ignore_ascii_case("tcp") => ConnectionType::Tcp,
+        _ if crate::android_usb::is_usb_port(&port_name) => ConnectionType::AndroidUsb,
         _ => ConnectionType::Serial,
     };
 
@@ -119,6 +120,12 @@ pub async fn connect_to_ecu(
         start_metrics_task(app.clone(), state.clone()).await;
 
         return Ok(res);
+    }
+
+    // Android USB adapters are opened by the platform, which may first ask
+    // the user for permission.
+    if config.connection_type == ConnectionType::AndroidUsb {
+        config.usb_fd = Some(crate::android_usb::open(&config.port_name).await?);
     }
 
     // If a timeout was provided by the UI, apply it

@@ -10,7 +10,9 @@ use libretune_core::datalog::DataLogger;
 use libretune_core::project::OnlineIniRepository;
 use tokio::sync::Mutex;
 
+mod android_usb;
 mod commands;
+mod folder_picker;
 mod mcp;
 mod paths;
 mod port_editor; // used by commands/ini_dialogs.rs
@@ -206,10 +208,16 @@ pub fn run() {
         .with_target(true)
         .init();
 
-    tauri::Builder::default()
-        .plugin(tauri_plugin_window_state::Builder::default().build())
+    let builder = tauri::Builder::default();
+    // Window geometry only means something where windows can be moved.
+    #[cfg(desktop)]
+    let builder = builder.plugin(tauri_plugin_window_state::Builder::default().build());
+
+    builder
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_dialog::init())
+        .plugin(android_usb::init())
+        .plugin(folder_picker::init())
         .manage(AppState {
             connection: Mutex::new(None),
             connection_transition: Mutex::new(()),
@@ -511,10 +519,23 @@ pub fn run() {
             mcp::commands::mcp_set_enabled,
             mcp::commands::mcp_set_port,
             mcp::commands::mcp_get_token,
-            mcp::commands::mcp_regenerate_token
+            mcp::commands::mcp_regenerate_token,
+            folder_picker::pick_folder_copy
         ])
         .manage(mcp::server::McpServerState::default())
         .setup(|app| {
+            // Android sets no $HOME, so every `dirs::` lookup (projects, the
+            // INI repository) comes back empty and startup fails. Point it at
+            // the app's private storage before the first command can run.
+            #[cfg(target_os = "android")]
+            if std::env::var_os("HOME").is_none() {
+                use tauri::Manager;
+                if let Ok(dir) = app.path().app_data_dir() {
+                    let _ = std::fs::create_dir_all(&dir);
+                    std::env::set_var("HOME", &dir);
+                }
+            }
+
             // Restart the MCP server if the user left it enabled last run.
             // Spawned rather than awaited: a busy port must not block the
             // window from opening, and the failure surfaces in the Settings

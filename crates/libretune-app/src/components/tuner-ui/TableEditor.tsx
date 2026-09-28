@@ -5,6 +5,7 @@ import { useChannels } from '../../stores/realtimeStore';
 import { useHeatmapSettings } from '../../utils/useHeatmapSettings';
 import { contrastTextColor } from '../../utils/heatmapColors';
 import { askNumber } from '../../utils/askNumber';
+import { getUiScale } from '../../utils/uiScale';
 import { useTableYAxisBottom, setTableYAxisBottom, useTrailFadeSec } from '../../utils/useTableOrientation';
 import './TableEditor.css';
 import TableEditor3D from '../tables/TableEditor3D';
@@ -379,6 +380,49 @@ export function TableEditor({
   // (3 px stroke, 4 px dots, halo + solid dot on the current cell).
   const tableElRef = useRef<HTMLTableElement | null>(null);
   const scrollHostRef = useRef<HTMLDivElement | null>(null);
+
+  // Fit: scale the grid to fill the space it has - down when the table is
+  // too big, up when there is room (fullscreen), so the numbers are as large
+  // as the width allows - then stretch the rows to use the leftover height.
+  // On by default when the UI is scaled up (a phone). Applied straight to the
+  // element: reset, measure the natural size, set - no render feedback loop.
+  const [fitToScreen, setFitToScreen] = useState(() => getUiScale() > 1);
+  useLayoutEffect(() => {
+    const host = scrollHostRef.current;
+    const table = tableElRef.current;
+    if (!host || !table) return;
+    const reset = () => {
+      table.style.zoom = '';
+      table.style.height = '';
+    };
+    if (!fitToScreen) {
+      reset();
+      return;
+    }
+    const fit = () => {
+      reset();
+      const rect = table.getBoundingClientRect();
+      const cs = getComputedStyle(host);
+      const availW = host.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight);
+      const availH = host.clientHeight - parseFloat(cs.paddingTop) - parseFloat(cs.paddingBottom);
+      if (!rect.width || !rect.height || availW <= 0 || availH <= 0) return;
+      // Cap the growth: past 3x a small table becomes a few giant cells.
+      const zoom = Math.min(3, availW / rect.width, availH / rect.height);
+      table.style.zoom = String(zoom);
+      // Width-limited: give the spare height to the rows.
+      const fillH = availH / zoom;
+      if (fillH > rect.height + 1) table.style.height = `${fillH}px`;
+    };
+    fit();
+    if (typeof ResizeObserver === 'undefined') return reset; // jsdom
+    // Only the host is observed: fit() resizes the table itself.
+    const ro = new ResizeObserver(fit);
+    ro.observe(host);
+    return () => {
+      ro.disconnect();
+      reset();
+    };
+  }, [fitToScreen, show3D, data.xAxis.length, data.yAxis.length]);
   const [gridGeometry, setGridGeometry] = useState<GridGeometry | null>(null);
 
   useLayoutEffect(() => {
@@ -1226,6 +1270,8 @@ export function TableEditor({
         onToggleYAxisBottom={() => setTableYAxisBottom(!yAxisBottom)}
         show3D={show3D}
         onToggle3D={() => setShow3D(!show3D)}
+        fitToScreen={fitToScreen}
+        onToggleFitToScreen={() => setFitToScreen(!fitToScreen)}
         onGenerate={generatableKind ? () => setShowGenerateDialog(true) : undefined}
         generatableLabel={generatableKind ? generatableTableLabel(generatableKind) : undefined}
         onImportTable={handleImportTable}
@@ -1256,7 +1302,10 @@ export function TableEditor({
       {/* Table */}
       {!show3D && (
       <div className="table-grid-container" ref={scrollHostRef}>
-        <table className="table-grid" ref={tableElRef}>
+        <table
+          className={`table-grid ${fitToScreen ? 'table-grid-fit' : ''}`}
+          ref={tableElRef}
+        >
           {!yAxisBottom && <thead>
             <tr>
               <th className="table-corner">

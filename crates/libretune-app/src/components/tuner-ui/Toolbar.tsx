@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { ReactNode, useEffect, useRef, useState } from 'react';
 import {
   FilePlus,
   FolderOpen,
@@ -16,6 +16,9 @@ import {
   ClipboardPaste,
   HelpCircle,
   MoreHorizontal,
+  PanelLeftClose,
+  PanelLeftOpen,
+  Maximize2,
   LucideIcon,
 } from 'lucide-react';
 import { ToolbarItem } from './TunerLayout';
@@ -23,6 +26,8 @@ import './Toolbar.css';
 
 interface ToolbarProps {
   items: ToolbarItem[];
+  /** Rendered at the far right, after the "More" button (e.g. the burger menu). */
+  trailing?: ReactNode;
 }
 
 // Map icon string names to lucide-react components
@@ -41,6 +46,9 @@ const iconMap: Record<string, LucideIcon> = {
   'redo': Redo2,
   'copy': Copy,
   'paste': ClipboardPaste,
+  'sidebar-hide': PanelLeftClose,
+  'sidebar-show': PanelLeftOpen,
+  'fullscreen': Maximize2,
   'default': HelpCircle,
 };
 
@@ -80,7 +88,7 @@ function renderItem(item: ToolbarItem, index: number) {
   );
 }
 
-export function Toolbar({ items }: ToolbarProps) {
+export function Toolbar({ items, trailing }: ToolbarProps) {
   const [moreOpen, setMoreOpen] = useState(false);
   const moreWrapRef = useRef<HTMLDivElement>(null);
 
@@ -142,6 +150,7 @@ export function Toolbar({ items }: ToolbarProps) {
           </div>
         )}
       </div>
+      {trailing}
     </div>
   );
 }

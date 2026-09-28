@@ -8,6 +8,7 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { invoke } from '@tauri-apps/api/core';
 import { ArrowLeft, Save, Flame, Undo2, Redo2, AlertTriangle } from 'lucide-react';
+import { useUiScale } from '../../utils/uiScale';
 import { GaugeLiveReadout } from '../gauges/GaugeLiveReadout';
 import { TsGaugeConfig } from '../dashboards/dashTypes';
 import { valueToHeatmapColor, textColorForBackground } from '../../utils/heatmapColors';
@@ -197,6 +198,7 @@ export default function CurveEditor({
   // SVG container ref
   const svgRef = useRef<SVGSVGElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  const compact = useUiScale() > 1;
   const chartContainerRef = useRef<HTMLDivElement>(null);
   // Embedded mode's chart box is CSS-sized (width: 100%, capped 320-500px —
   // see CurveEditor.css), not fixed — this tracks the box's actual rendered
@@ -810,10 +812,15 @@ Suggestion: {errorInfo.suggestion}
       {/* Header - only for standalone mode */}
       {!embedded && (
         <div className="curve-editor-header">
-          <button className="back-button" onClick={onBack} title="Back">
-            <ArrowLeft size={18} />
-          </button>
-          <h2 className="curve-title">{displayTitle}</h2>
+          {/* Scaled up, the tab names the curve and navigates away from it. */}
+          {!compact && (
+            <>
+              <button className="back-button" onClick={onBack} title="Back">
+                <ArrowLeft size={18} />
+              </button>
+              <h2 className="curve-title">{displayTitle}</h2>
+            </>
+          )}
           <div className="curve-toolbar">
             <button 
               className="toolbar-btn" 

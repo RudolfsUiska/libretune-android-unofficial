@@ -29,6 +29,13 @@ import { useDashboardScale } from './hooks/useDashboardScale';
 import { useDashboardValidation } from './hooks/useDashboardValidation';
 import { useDashboardCRUD } from './hooks/useDashboardCRUD';
 import { useGaugeRangeSync } from './hooks/useGaugeRangeSync';
+import { Maximize2, Minimize2 } from 'lucide-react';
+import CassetteDashboard from './cassette/CassetteDashboard';
+import MontegoDashboard from './montego/MontegoDashboard';
+import Cs16Dashboard from './cs16/Cs16Dashboard';
+import { CASSETTE_DASH_PATH, CS16_DASH_PATH, MONTEGO_DASH_PATH, isBuiltinDash } from './builtinDashes';
+import { useDashboardFullscreen } from '../../utils/viewFullscreen';
+import '../../styles/view-fullscreen.css';
 import './TsDashboard.css';
 
 /**
@@ -55,6 +62,7 @@ export default function TsDashboard({ initialDashPath, isConnected = false }: Ts
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showSelector, setShowSelector] = useState(false);
+  const { fullscreen, enter: enterFullscreen, exit: exitFullscreen } = useDashboardFullscreen();
   const [channelInfoMap, setChannelInfoMap] = useState<Record<string, ChannelInfo>>({});
   
   // Gauge sweep animation (sportscar-style min→max→min on load)
@@ -260,7 +268,10 @@ export default function TsDashboard({ initialDashPath, isConnected = false }: Ts
         try {
           const settings = await invoke<{ selected_dashboard?: string }>('get_settings');
           if (settings.selected_dashboard) {
-            const saved = dashes.find(d => d.name === settings.selected_dashboard);
+            // Built-in dashes persist their path (they have no file name).
+            const saved = dashes.find(
+              d => d.name === settings.selected_dashboard || d.path === settings.selected_dashboard,
+            );
             if (saved) {
               setSelectedPath(saved.path);
               return;
@@ -300,6 +311,13 @@ export default function TsDashboard({ initialDashPath, isConnected = false }: Ts
   useEffect(() => {
     const loadDashboard = async () => {
       if (!selectedPath) {
+        setLoading(false);
+        return;
+      }
+      // Built-in dashes are drawn by code; there is no file to load.
+      if (isBuiltinDash(selectedPath)) {
+        setDashFile(null);
+        setError(null);
         setLoading(false);
         return;
       }
@@ -346,6 +364,58 @@ export default function TsDashboard({ initialDashPath, isConnected = false }: Ts
     setSelectedPath(path);
     setShowSelector(false);
   };
+
+  if (isBuiltinDash(selectedPath)) {
+    const title = availableDashes.find((d) => d.path === selectedPath)?.name ?? 'Dashboard';
+    return (
+      <div className={`ts-dashboard-container ${fullscreen ? 'ts-dashboard-fullscreen' : ''}`}>
+        {fullscreen ? (
+          <button className="view-fullscreen-exit" onClick={exitFullscreen} title="Exit fullscreen">
+            <Minimize2 size={18} />
+          </button>
+        ) : (
+          // Rename/delete/export do not apply to a dash that is not a file.
+          <div className="ts-dashboard-header">
+            <div className="ts-dashboard-header-left">
+              <span className="ts-dashboard-title">{title}</span>
+              <button className="ts-dashboard-selector-btn" onClick={() => setShowSelector(!showSelector)}>
+                Change ▼
+              </button>
+            </div>
+            <div className="ts-dashboard-header-right">
+              <button className="ts-dashboard-action-btn" onClick={enterFullscreen} title="Fullscreen (Back or Esc to exit)">
+                <Maximize2 size={14} />
+              </button>
+            </div>
+          </div>
+        )}
+        {showSelector && (
+          <DashboardSelectorOverlay
+            availableDashes={availableDashes}
+            selectedPath={selectedPath}
+            onSelect={handleDashSelect}
+            onClose={() => setShowSelector(false)}
+            onImportClick={() => {
+              setShowSelector(false);
+              setShowImportDialog(true);
+            }}
+          />
+        )}
+        <ImportDashboardDialog
+          isOpen={showImportDialog}
+          onClose={() => setShowImportDialog(false)}
+          onImportComplete={handleImportComplete}
+        />
+        {selectedPath === CASSETTE_DASH_PATH ? (
+          <CassetteDashboard isConnected={isConnected} />
+        ) : selectedPath === MONTEGO_DASH_PATH ? (
+          <MontegoDashboard isConnected={isConnected} />
+        ) : selectedPath === CS16_DASH_PATH ? (
+          <Cs16Dashboard isConnected={isConnected} />
+        ) : null}
+      </div>
+    );
+  }
 
   if (loading) {
     return (
@@ -410,8 +480,13 @@ export default function TsDashboard({ initialDashPath, isConnected = false }: Ts
 
 
   return (
-    <div className="ts-dashboard-container">
-      <DashboardHeader
+    <div className={`ts-dashboard-container ${fullscreen ? 'ts-dashboard-fullscreen' : ''}`}>
+      {fullscreen && (
+        <button className="view-fullscreen-exit" onClick={exitFullscreen} title="Exit fullscreen">
+          <Minimize2 size={18} />
+        </button>
+      )}
+      {!fullscreen && <DashboardHeader
         title={dashFile.bibliography.author || selectedPath.split('/').pop()?.replace(/\.(ltdash\.xml|dash)$/i, '') || 'Dashboard'}
         showSelector={showSelector}
         onToggleSelector={() => setShowSelector(!showSelector)}
@@ -429,7 +504,8 @@ export default function TsDashboard({ initialDashPath, isConnected = false }: Ts
         onToggleValidationPanel={() => setShowValidationPanel((prev) => !prev)}
         legacyMode={legacyMode}
         onToggleLegacyMode={() => setLegacyMode((prev) => !prev)}
-      />
+        onFullscreen={enterFullscreen}
+      />}
 
       {showValidationPanel && validationReport && (
         <ValidationPanel report={validationReport} onClose={() => setShowValidationPanel(false)} />

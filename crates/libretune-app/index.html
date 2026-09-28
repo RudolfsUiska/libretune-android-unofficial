@@ -4,7 +4,41 @@
     <meta charset="UTF-8" />
     <meta name="color-scheme" content="dark light" />
     <link rel="icon" type="image/svg+xml" href="/vite.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <!-- Fixed layout width: the UI has no phone layout yet, so the Android
+         build lays it out at a fixed width and scales that to fit the screen
+         (MainActivity enables this). Portrait gets a narrower width so text
+         stays readable. The UI scale setting (View > UI Scale, see
+         src/utils/uiScale.ts) divides that width, so 200% genuinely reflows
+         the page into half the room. Desktop webviews ignore the viewport
+         tag, so there the scale is applied as CSS zoom instead. -->
+    <meta name="viewport" id="viewport" content="width=1100" />
+    <script>
+      (function () {
+        var vp = document.getElementById('viewport');
+        var android = /Android/i.test(navigator.userAgent);
+        function scale() {
+          try {
+            var s = parseFloat(localStorage.getItem('libretune.uiScale'));
+            return s >= 1 && s <= 3 ? s : 1;
+          } catch (e) {
+            return 1;
+          }
+        }
+        function apply() {
+          var s = scale();
+          if (android) {
+            var portrait = screen.width < screen.height;
+            vp.setAttribute('content', 'width=' + Math.round((portrait ? 640 : 1100) / s));
+          } else {
+            document.documentElement.style.zoom = s === 1 ? '' : String(s);
+          }
+        }
+        window.__applyUiScale = apply;
+        apply();
+        addEventListener('resize', apply);
+        addEventListener('orientationchange', apply);
+      })();
+    </script>
     <title>LibreTune - Free and Open Source Tuning Suite</title>
   </head>
 

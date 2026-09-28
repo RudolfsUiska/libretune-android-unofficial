@@ -3,6 +3,8 @@ import { invoke } from "@tauri-apps/api/core";
 import { getCurrentWindow } from "@tauri-apps/api/window";
 import type { MenuItem as TunerMenuItem, Tab } from "../components/tuner-ui";
 import { THEME_INFO, ThemeName } from "../themes";
+import { UI_SCALES, UiScale, setUiScale } from "../utils/uiScale";
+import { openDashboardsFullscreen as dashFsPref, openTabsFullscreen as tabsFsPref } from "../utils/viewFullscreen";
 import type {
   BackendMenu,
   BackendMenuItem,
@@ -21,6 +23,9 @@ export interface BuildMenuItemsDeps {
   iniCapabilities: IniCapabilities | null;
   backendMenus: BackendMenu[] | null;
   theme: ThemeName;
+  uiScale: UiScale;
+  openDashboardsFullscreen: boolean;
+  openTabsFullscreen: boolean;
   sidebarVisible: boolean;
   /** When false, ECU-derived (INI) tuning menus are hidden from the menu bar
    *  (they remain available in the sidebar). */
@@ -75,7 +80,7 @@ function quitApp(): void {
 export function buildMenuItems(deps: BuildMenuItemsDeps): TunerMenuItem[] {
   const {
     t, currentProject, tuneModified, status, ecuType, iniCapabilities, backendMenus, theme,
-    sidebarVisible, showEcuMenus, tabs, openTarget, handleStdTarget, openHelpTopic, showToast,
+    uiScale, openDashboardsFullscreen, openTabsFullscreen, sidebarVisible, showEcuMenus, tabs, openTarget, handleStdTarget, openHelpTopic, showToast,
     closeProject, handleCreateRestorePoint,
     setConnectEcuWizardOpen, setImportProjectOpen, setSaveDialogOpen, setLoadDialogOpen,
     setOnlineIniDialogOpen,
@@ -141,6 +146,33 @@ export function buildMenuItems(deps: BuildMenuItemsDeps): TunerMenuItem[] {
           checked: theme === key,
           onClick: () => setTheme(key as ThemeName),
         })),
+      },
+      {
+        // Above 100% the menu bar collapses into a burger button (MenuBar).
+        id: "ui-scale",
+        label: t('view.uiScale'),
+        items: UI_SCALES.map((scale) => ({
+          id: `ui-scale-${scale * 100}`,
+          label: `${scale * 100}%`,
+          checked: uiScale === scale,
+          onClick: () => setUiScale(scale),
+        })),
+      },
+      {
+        // Takes effect when a dashboard opens; the dashboard's own header
+        // button enters fullscreen right away.
+        id: "open-dashboards-fullscreen",
+        label: t('view.openDashboardsFullscreen'),
+        checked: openDashboardsFullscreen,
+        onClick: () => dashFsPref.set(!openDashboardsFullscreen),
+      },
+      {
+        // Newly opened tabs only; the toolbar's fullscreen button covers the
+        // tab already on screen.
+        id: "open-tabs-fullscreen",
+        label: t('view.openTabsFullscreen'),
+        checked: openTabsFullscreen,
+        onClick: () => tabsFsPref.set(!openTabsFullscreen),
       },
     ],
   };

@@ -1,10 +1,15 @@
-import { ReactNode, useState, useCallback } from 'react';
+import { ReactNode, useState, useCallback, useEffect, useRef } from 'react';
+import { Minimize2 } from 'lucide-react';
 import { MenuBar } from './MenuBar';
 import { Toolbar } from './Toolbar';
 import { TabBar, Tab } from './TabBar';
 import { Sidebar } from './Sidebar';
 import { StatusBar, ChannelInfoForStatusBar } from './StatusBar';
 import { AgentSidePanel } from '../agent/AgentSidePanel';
+import { isAndroid } from '../../utils/platform';
+import { useUiScale } from '../../utils/uiScale';
+import { useFullscreenView, openTabsFullscreen } from '../../utils/viewFullscreen';
+import '../../styles/view-fullscreen.css';
 import './TunerLayout.css';
 
 export interface TunerLayoutProps {
@@ -118,7 +123,7 @@ export function TunerLayout({
   onTabPopout,
   sidebarItems,
   sidebarVisible,
-  onSidebarToggle: _onSidebarToggle,
+  onSidebarToggle,
   onSidebarItemSelect,
   searchIndex,
   statusItems,
@@ -136,6 +141,25 @@ export function TunerLayout({
   channelInfoMap,
   children,
 }: TunerLayoutProps) {
+  // Scaled up, the menu row does not fit; MenuBar becomes a burger button at
+  // the right end of the toolbar, saving the row for content.
+  const compact = useUiScale() > 1;
+  // Any tab (a VE table, a dialog, a curve) can take over the whole window.
+  const tabFullscreen = useFullscreenView();
+  const { enter: enterTabFullscreen } = tabFullscreen;
+
+  // View > Open Tabs Fullscreen: a tab that has just been opened, and is now
+  // the active one, goes straight to fullscreen. Tabs present on first render
+  // were not "opened"; the dashboard tab follows its own option instead.
+  const openTabsFs = openTabsFullscreen.use();
+  const knownTabIds = useRef<Set<string> | null>(null);
+  useEffect(() => {
+    const ids = tabs.map((t) => t.id);
+    const known = knownTabIds.current;
+    knownTabIds.current = new Set(ids);
+    if (!known || !openTabsFs || !activeTabId || activeTabId === 'dashboard') return;
+    if (!known.has(activeTabId) && ids.includes(activeTabId)) enterTabFullscreen();
+  }, [tabs, activeTabId, openTabsFs, enterTabFullscreen]);
   const [sidebarWidth, setSidebarWidth] = useState(240);
   const [agentPanelWidth, setAgentPanelWidth] = useState(360);
 
@@ -150,10 +174,29 @@ export function TunerLayout({
   return (
     <div className="tuner-layout">
       {/* Menu Bar */}
-      <MenuBar items={menuItems} />
+      {!compact && <MenuBar items={menuItems} />}
       
-      {/* Toolbar */}
-      <Toolbar items={toolbarItems} />
+      {/* Toolbar, led by the sidebar toggle: on a narrow (phone) screen the
+          sidebar takes most of the width, so it needs a one-tap way out. */}
+      <Toolbar
+        items={[
+          {
+            id: 'toggle-sidebar',
+            icon: sidebarVisible ? 'sidebar-hide' : 'sidebar-show',
+            tooltip: sidebarVisible ? 'Hide sidebar' : 'Show sidebar',
+            onClick: onSidebarToggle,
+          },
+          {
+            id: 'fullscreen-tab',
+            icon: 'fullscreen',
+            tooltip: 'Fullscreen tab (Back or Esc to exit)',
+            onClick: tabFullscreen.enter,
+          },
+          { id: 'sep-sidebar', icon: '', tooltip: '', separator: true },
+          ...toolbarItems,
+        ]}
+        trailing={compact ? <MenuBar items={menuItems} /> : undefined}
+      />
       
       {/* Main content area */}
       <div className="tuner-layout-main">
@@ -179,11 +222,17 @@ export function TunerLayout({
             onTabSelect={onTabSelect}
             onTabClose={onTabClose}
             onTabReorder={onTabReorder}
-            onTabPopout={onTabPopout}
+            // Android cannot open a second window; pop-out would only fail.
+            onTabPopout={isAndroid() ? undefined : onTabPopout}
           />
           
           {/* Tab content */}
-          <div className="tuner-layout-content">
+          <div className={`tuner-layout-content ${tabFullscreen.fullscreen ? 'tuner-layout-content-fullscreen' : ''}`}>
+            {tabFullscreen.fullscreen && (
+              <button className="view-fullscreen-exit" onClick={tabFullscreen.exit} title="Exit fullscreen">
+                <Minimize2 size={18} />
+              </button>
+            )}
             {children}
           </div>
         </div>

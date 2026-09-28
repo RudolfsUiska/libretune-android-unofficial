@@ -1,0 +1,22 @@
+/* Fullscreen exit control (dashboards and tabs); stays out of the way until
+   pointed at or tapped. */
+.view-fullscreen-exit {
+  position: fixed;
+  bottom: 8px;
+  right: 8px;
+  z-index: 901;
+  display: flex;
+  padding: 6px;
+  border: 1px solid var(--border-subtle);
+  border-radius: 6px;
+  background: var(--bg-elevated, rgba(0, 0, 0, 0.5));
+  color: var(--text-primary);
+  opacity: 0.35;
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+
+.view-fullscreen-exit:hover,
+.view-fullscreen-exit:focus-visible {
+  opacity: 1;
+}

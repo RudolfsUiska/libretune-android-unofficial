@@ -27,7 +27,10 @@
     "title": "&Visualizar",
     "dashboard": "&Painel",
     "toggleSidebar": "Alternar &Barra Lateral",
-    "theme": "&Tema"
+    "theme": "&Tema",
+    "uiScale": "&Escala da interface",
+    "openDashboardsFullscreen": "Abrir &painéis em tela cheia",
+    "openTabsFullscreen": "Abrir &abas em tela cheia"
   },
   "tools": {
     "title": "&Ferramentas",

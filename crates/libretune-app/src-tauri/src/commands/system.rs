@@ -31,5 +31,8 @@ pub async fn get_serial_ports(probe: Option<bool>) -> Result<Vec<String>, String
     } else {
         list_ports_unprobed()
     };
-    Ok(ports.into_iter().map(|p| p.name).collect())
+    let mut names: Vec<String> = ports.into_iter().map(|p| p.name).collect();
+    // Android exposes no tty nodes; its USB adapters come from the platform.
+    names.extend(crate::android_usb::list_ports().await);
+    Ok(names)
 }

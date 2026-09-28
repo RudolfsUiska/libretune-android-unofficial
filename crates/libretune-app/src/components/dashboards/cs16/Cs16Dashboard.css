@@ -1,0 +1,169 @@
+/*
+ * CS 1.6 menu-style engine dash. Colours, bevels and the segmented progress
+ * bar are from cs16.css (github.com/ekmas/cs16.css, MIT, Copyright (c) 2025
+ * Samuel Breznjak); the checkbox tick and close glyph are redrawn in its style.
+ * Sizes use container units so the window fills whatever space it gets.
+ */
+/* The original pixel font (ArialPixel, from ekmas/cs16.css) is not bundled:
+   its licence is undocumented. Install it on the device to get the exact look. */
+
+.cs16-dash {
+  --bg: #4a5942;
+  --secondary-bg: #3e4637;
+  --accent: #c4b550;
+  --text: #dedfd6;
+  --text-3: #a0aa95;
+  --border-light: #8c9284;
+  --border-dark: #292c21;
+  /* Not in cs16.css: the CS HUD's low-health red, for warnings. */
+  --warn: #e0492c;
+
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+  container-type: size;
+  overflow: hidden;
+  padding: min(3cqh, 1.6cqw);
+  background-color: var(--bg);
+  color: var(--text);
+  font-family: 'ArialPixel', Verdana, Tahoma, sans-serif;
+  /* The window stacks about 18 lines of text: size from the height first. */
+  font-size: min(3.8cqh, 2.6cqw);
+  line-height: 1.2;
+  user-select: none;
+}
+
+/* .cs-dialog: raised bevel, light top-left, dark bottom-right */
+.cs16-window {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  background-color: var(--bg);
+  border: 1px solid;
+  border-color: var(--border-light) var(--border-dark) var(--border-dark) var(--border-light);
+  padding: 0.3em;
+}
+
+.cs16-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.2em 0.2em 0 0.3em;
+}
+.cs16-title {
+  color: #fff;
+}
+.cs16-close {
+  width: 1.2em;
+  height: 1.2em;
+  border: 1px solid;
+  border-color: var(--border-light) var(--border-dark) var(--border-dark) var(--border-light);
+  background: no-repeat center / 90%
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 16 16' shape-rendering='crispEdges'%3E%3Cpath d='M3,3h2v1h1v1h1v1h2v-1h1v-1h1v-1h2v2h-1v1h-1v1h-1v2h1v1h1v1h1v2h-2v-1h-1v-1h-1v-1h-2v1h-1v1h-1v1h-2v-2h1v-1h1v-1h1v-2h-1v-1h-1v-1h-1z' fill='%238c9284'/%3E%3C/svg%3E");
+}
+
+.cs16-content {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-around;
+  padding: 0.6em 0.8em;
+}
+
+/* A reading: label | progress bar | value */
+/* One column grid for every row (the big row enlarges text, not columns), so
+   the bars line up. */
+.cs16-row {
+  display: grid;
+  grid-template-columns: 9em minmax(0, 1fr) 8em;
+  align-items: center;
+  gap: 0.8em;
+}
+.cs16-row-label {
+  color: var(--text-3);
+}
+.cs16-row-value {
+  text-align: right;
+  color: #fff;
+  white-space: nowrap;
+}
+.cs16-unit {
+  color: var(--text-3);
+  margin-left: 0.3em;
+  font-size: 0.8em;
+}
+
+/* .cs-progress-bar: sunken well with the chunky segmented fill */
+.cs16-progress {
+  --seg-h: 1.2em;
+  height: calc(var(--seg-h) + 8px);
+  padding: 3px;
+  background-color: var(--secondary-bg);
+  border: 1px solid;
+  border-color: var(--border-dark) var(--border-light) var(--border-light) var(--border-dark);
+}
+.cs16-bars {
+  height: 100%;
+  /* 8 on / 4 off, as cs16.css, scaled with the bar height */
+  background-image: linear-gradient(to right, var(--accent) 66.7%, transparent 66.7%);
+  background-size: calc(var(--seg-h) * 0.75) 100%;
+}
+
+.cs16-row-big .cs16-row-label,
+.cs16-row-big .cs16-row-value {
+  font-size: 1.5em;
+}
+.cs16-row-big .cs16-progress {
+  --seg-h: 2.2em;
+}
+
+/* Warning range: value and bar go red. */
+.cs16-warn .cs16-row-value {
+  color: var(--warn);
+}
+.cs16-warn .cs16-bars {
+  background-image: linear-gradient(to right, var(--warn) 66.7%, transparent 66.7%);
+}
+
+/* .cs-hr: engraved line */
+.cs16-hr {
+  border: 0;
+  border-top: 1px solid var(--border-dark);
+  border-bottom: 1px solid var(--border-light);
+  margin: 0;
+}
+
+.cs16-footer {
+  display: flex;
+  flex-wrap: wrap;
+  overflow: hidden;
+  gap: 0.4em 1.6em;
+  padding: 0.4em 0.8em 0.6em;
+}
+
+/* .cs-checkbox: sunken box, gold tick and label when checked */
+.cs16-check {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45em;
+  color: var(--text-3);
+}
+.cs16-check::before {
+  content: '';
+  width: 0.8em;
+  height: 0.8em;
+  background-color: var(--secondary-bg);
+  border: 1px solid;
+  border-color: var(--border-dark) var(--border-light) var(--border-light) var(--border-dark);
+}
+.cs16-check-on {
+  color: var(--accent);
+}
+.cs16-check-on::before {
+  background: var(--secondary-bg) no-repeat center / 90%
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 10 10' shape-rendering='crispEdges'%3E%3Cpath d='M2,4h1v1h1v1h1v1h1v-2h1v-1h1v-1h1v-1h1v2h-1v1h-1v1h-1v1h-1v1h-1v1h-1v-1h-1v-1h-1v-1h-1z' fill='%23c4b550'/%3E%3C/svg%3E");
+}

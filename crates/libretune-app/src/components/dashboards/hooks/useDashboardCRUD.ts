@@ -8,6 +8,7 @@
 import { useCallback, useState } from 'react';
 import { invoke } from '@tauri-apps/api/core';
 import { save } from '@tauri-apps/plugin-dialog';
+import { BUILTIN_DASHES } from '../builtinDashes';
 import type { DashFile, DashFileInfo } from '../dashTypes';
 
 interface UseDashboardCRUDOptions {
@@ -34,13 +35,13 @@ export function useDashboardCRUD({
    */
   const refreshDashboardList = useCallback(async () => {
     try {
-      const dashes = await invoke<DashFileInfo[]>('list_available_dashes');
-      setAvailableDashes(dashes ?? []);
-      return dashes ?? [];
+      const dashes = [...((await invoke<DashFileInfo[]>('list_available_dashes')) ?? []), ...BUILTIN_DASHES];
+      setAvailableDashes(dashes);
+      return dashes;
     } catch (e) {
       console.warn('[useDashboardCRUD] list_available_dashes failed:', e);
-      setAvailableDashes([]);
-      return [];
+      setAvailableDashes(BUILTIN_DASHES);
+      return BUILTIN_DASHES;
     }
   }, []);
 

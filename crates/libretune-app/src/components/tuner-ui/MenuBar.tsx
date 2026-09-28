@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect, useCallback, CSSProperties, KeyboardEvent } from 'react';
-import { Check } from 'lucide-react';
+import { Check, Menu } from 'lucide-react';
 import { MenuItem } from './TunerLayout';
+import { useUiScale } from '../../utils/uiScale';
 import './MenuBar.css';
 
 interface MenuBarProps {
@@ -15,6 +16,9 @@ export function MenuBar({ items }: MenuBarProps) {
   const menuBarRef = useRef<HTMLDivElement>(null);
   const moreWrapRef = useRef<HTMLDivElement>(null);
   const itemRefs = useRef<Record<string, HTMLButtonElement | null>>({});
+  // Scaled up (View > UI Scale), the menu row no longer fits, so every menu
+  // moves behind a single burger button.
+  const compact = useUiScale() > 1;
 
   // The dropdown for the open top-level menu renders outside the scrollable
   // `.menubar-items` row (see below) so horizontal scrolling can't clip it
@@ -160,6 +164,34 @@ export function MenuBar({ items }: MenuBarProps) {
 
   const openItem = openMenuId ? items.find((item) => item.id === openMenuId) : undefined;
 
+  if (compact) {
+    return (
+      <div className="menubar menubar-compact" ref={menuBarRef}>
+        <button
+          className={`menubar-burger ${moreOpen ? 'menubar-item-open' : ''}`}
+          onClick={() => setMoreOpen((v) => !v)}
+          aria-haspopup="true"
+          aria-expanded={moreOpen}
+          aria-label="Menu"
+          title="Menu"
+        >
+          <Menu size={18} />
+        </button>
+        {moreOpen && (
+          <MenuDropdown
+            items={items.filter((item) => !item.separator)}
+            onDismissAll={() => {
+              closeMenu();
+              setMoreOpen(false);
+            }}
+            level={0}
+            inline
+          />
+        )}
+      </div>
+    );
+  }
+
   return (
     <div className="menubar" ref={menuBarRef}>
       <div className="menubar-items" onScroll={handleItemsScroll} role="menubar">
@@ -253,9 +285,12 @@ interface MenuDropdownProps {
   onCloseSubmenu?: () => void;
   level?: number;
   style?: CSSProperties;
+  /** Submenus expand in place below their item instead of flying out to the
+   *  side, which would run off a narrow (scaled-up) screen. */
+  inline?: boolean;
 }
 
-function MenuDropdown({ items, onDismissAll, onCloseSubmenu, level = 0, style }: MenuDropdownProps) {
+function MenuDropdown({ items, onDismissAll, onCloseSubmenu, level = 0, style, inline = false }: MenuDropdownProps) {
   const [focusedIndex, setFocusedIndex] = useState(0);
   const [openSubmenuId, setOpenSubmenuId] = useState<string | null>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -361,7 +396,7 @@ function MenuDropdown({ items, onDismissAll, onCloseSubmenu, level = 0, style }:
 
   return (
     <div
-      className={`menu-dropdown menu-dropdown-level-${level}`}
+      className={`menu-dropdown menu-dropdown-level-${level} ${inline ? 'menu-dropdown-inline' : ''}`}
       style={style}
       ref={dropdownRef}
       role="menu"
@@ -388,6 +423,9 @@ function MenuDropdown({ items, onDismissAll, onCloseSubmenu, level = 0, style }:
               onClick={() => handleItemClick(item)}
               onMouseEnter={() => {
                 setFocusedIndex(index);
+                // Inline menus are for touch, where a tap fires mouseenter
+                // before click: opening here would let the click close it.
+                if (inline) return;
                 if (hasSubmenu) {
                   setOpenSubmenuId(item.id);
                 } else {
@@ -413,7 +451,7 @@ function MenuDropdown({ items, onDismissAll, onCloseSubmenu, level = 0, style }:
                 <span className="menu-item-shortcut">{parsed.shortcut}</span>
               )}
               {hasSubmenu && (
-                <span className="menu-item-arrow">▶</span>
+                <span className="menu-item-arrow">{inline ? (isOpen ? '▼' : '▶') : '▶'}</span>
               )}
             </button>
             
@@ -423,6 +461,7 @@ function MenuDropdown({ items, onDismissAll, onCloseSubmenu, level = 0, style }:
                 onDismissAll={onDismissAll}
                 onCloseSubmenu={() => setOpenSubmenuId(null)}
                 level={level + 1}
+                inline={inline}
               />
             )}
           </div>

@@ -27,7 +27,10 @@
     "title": "&View",
     "dashboard": "&Dashboard",
     "toggleSidebar": "Toggle &Sidebar",
-    "theme": "&Theme"
+    "theme": "&Theme",
+    "uiScale": "UI &Scale",
+    "openDashboardsFullscreen": "Open &Dashboards Fullscreen",
+    "openTabsFullscreen": "Open &Tabs Fullscreen"
   },
   "tools": {
     "title": "&Tools",
